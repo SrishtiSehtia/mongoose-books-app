@@ -124,16 +124,14 @@ app.put('/api/books/:id', function(req,res){
 // delete book
 app.delete('/api/books/:id', function (req, res) {
   // get book id from url params (`req.params`)
-  console.log('books delete', req.params);
-  var bookId = req.params.id;
-  // find the index of the book we want to remove
-  var deleteBookIndex = books.findIndex(function(element, index) {
-    return (element._id === parseInt(req.params.id)); //params are strings
-  });
-  console.log('deleting book with index', deleteBookIndex);
-  var bookToDelete = books[deleteBookIndex];
-  books.splice(deleteBookIndex, 1);
-  res.json(bookToDelete);
+ console.log('books delete', req.params);
+ var bookId = req.params.id;
+ // find the index of the book we want to remove
+ db.Book.findOneAndRemove({ _id: bookId })
+   .populate('author')
+   .exec(function (err, deletedBook) {
+     res.json(deletedBook);
+ });
 });
 
 
