@@ -50,13 +50,6 @@ app.get('/', function (req, res) {
 // get all books
 app.get('/api/books', function (req, res) {
   // send all books as JSON response
-  console.log('books index');
-  res.json(books);
-});
-
-// get one book
-app.get('/api/books', function (req, res) {
-  // send all books as JSON response
   db.Book.find(function(err, books){
     if (err) {
       console.log("index error: " + err);
@@ -66,14 +59,51 @@ app.get('/api/books', function (req, res) {
   });
 });
 
+// get one book
+app.get('/api/books/:id', function (req, res) {
+  db.Book.findOne({_id: req.params.id }, function(err, data) {
+    res.json(data);
+  });
+});
+
 // create new book
 app.post('/api/books', function (req, res) {
-  // create new book with form data (`req.body`)
-  console.log('books create', req.body);
-  var newBook = req.body;
-  newBook._id = newBookUUID++;
-  books.push(newBook);
-  res.json(newBook);
+  app.post('/api/books', function (req, res) {
+    // create new book with form data (`req.body`)
+    var newBook = new db.Book({
+      title: req.body.title,
+      image: req.body.image,
+      releaseDate: req.body.releaseDate,
+    });
+    // find the author from req.body
+    db.Author.findOne({name: req.body.author}, function(err, author){
+      if (err) {
+        return console.log(err);
+      }
+      // if that author doesn't exist yet, create a new one
+      if (author === null) {
+        db.Author.create({name:req.body.author, alive:true}, function(err, newAuthor) {
+          createBookWithAuthorAndRespondTo(newBook, newAuthor, res);
+        });
+      } else {
+        createBookWithAuthorAndRespondTo(newBook, author, res);
+      }
+    });
+  });
+
+  function createBookWithAuthorAndRespondTo(book, author, res) {
+    // add this author to the book
+    book.author = author;
+    // save newBook to database
+    book.save(function(err, book){
+      if (err) {
+        return console.log("save error: " + err);
+      }
+      console.log("saved ", book.title);
+      // send back the book!
+      res.json(book);
+    });
+  }
 });
 
 // update book
