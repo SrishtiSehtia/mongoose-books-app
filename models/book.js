@@ -7,3 +7,7 @@ var BookSchema = new Schema({
      image: String,
      releaseDate: Number
  });
+
+var Book = mongoose.model('Book', BookSchema);
+
+module.exports = Book;
